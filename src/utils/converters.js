@@ -739,3 +739,94 @@ function calcMD5(string) {
 
   return toHex(a0) + toHex(b0) + toHex(c0) + toHex(d0);
 }
+
+//SECTION - JSON Formatter / Validator
+export function formatJson(input, indent = 2) {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    const formatted = JSON.stringify(parsed, null, indent);
+    const minified = JSON.stringify(parsed);
+
+    return {
+      parsed,
+      formatted,
+      minified,
+      valid: true,
+      stats: analyzeJson(parsed),
+      originalSize: new Blob([trimmed]).size,
+      formattedSize: new Blob([formatted]).size,
+      minifiedSize: new Blob([minified]).size,
+    };
+  } catch (err) {
+    // 에러 위치 파싱
+    const posMatch = err.message.match(/position\s+(\d+)/i);
+    const pos = posMatch ? parseInt(posMatch[1], 10) : null;
+
+    let line = null;
+    let column = null;
+    if (pos !== null) {
+      const before = trimmed.substring(0, pos);
+      line = (before.match(/\n/g) || []).length + 1;
+      column = pos - before.lastIndexOf("\n");
+    }
+
+    return {
+      valid: false,
+      error: err.message,
+      errorPos: pos,
+      errorLine: line,
+      errorColumn: column,
+    };
+  }
+}
+
+function analyzeJson(value, depth = 0) {
+  const stats = {
+    totalKeys: 0,
+    totalValues: 0,
+    maxDepth: depth,
+    types: { string: 0, number: 0, boolean: 0, null: 0, object: 0, array: 0 },
+  };
+
+  if (value === null) {
+    stats.types.null++;
+    stats.totalValues++;
+    return stats;
+  }
+
+  if (Array.isArray(value)) {
+    stats.types.array++;
+    for (const item of value) {
+      const child = analyzeJson(item, depth + 1);
+      mergeStats(stats, child);
+    }
+    return stats;
+  }
+
+  if (typeof value === "object") {
+    stats.types.object++;
+    const keys = Object.keys(value);
+    stats.totalKeys += keys.length;
+    for (const key of keys) {
+      const child = analyzeJson(value[key], depth + 1);
+      mergeStats(stats, child);
+    }
+    return stats;
+  }
+
+  stats.types[typeof value]++;
+  stats.totalValues++;
+  return stats;
+}
+
+function mergeStats(target, source) {
+  target.totalKeys += source.totalKeys;
+  target.totalValues += source.totalValues;
+  target.maxDepth = Math.max(target.maxDepth, source.maxDepth);
+  for (const type in source.types) {
+    target.types[type] += source.types[type];
+  }
+}
