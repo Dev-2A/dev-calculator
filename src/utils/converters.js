@@ -309,3 +309,111 @@ function hslToRgb(h, s, l) {
     b: Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
   };
 }
+
+//SECTION - JWT 디코더
+export function decodeJwt(token) {
+  const trimmed = token.trim();
+  if (!trimmed) return null;
+
+  const parts = trimmed.split(".");
+  if (parts.length !== 3) return null;
+
+  try {
+    const header = safeBase64Decode(parts[0]);
+    const payload = safeBase64Decode(parts[1]);
+
+    if (!header || !payload) return null;
+
+    const headerObj = JSON.parse(header);
+    const payloadObj = JSON.parse(payload);
+
+    // 시간 관련 클레임 분석
+    const timeFields = {};
+    const now = Math.floor(Date.now() / 1000);
+
+    if (payloadObj.iat) {
+      timeFields.iat = {
+        label: "Issued At (iat)",
+        timestamp: payloadObj.iat,
+        date: new Date(payloadObj.iat * 1000).toLocaleString("ko-KR", {
+          hour12: false,
+        }),
+        relative: getJwtRelativeTime(payloadObj.iat, now),
+      };
+    }
+    if (payloadObj.exp) {
+      const isExpired = payloadObj.exp < now;
+      timeFields.exp = {
+        label: "Expiration (exp)",
+        timestamp: payloadObj.exp,
+        date: new Date(payloadObj.exp * 1000).toLocaleString("ko-KR", {
+          hour12: false,
+        }),
+        relative: getJwtRelativeTime(payloadObj.exp, now),
+        isExpired,
+      };
+    }
+    if (payloadObj.nbf) {
+      timeFields.nbf = {
+        label: "Not Before (nbf)",
+        timestamp: payloadObj.nbf,
+        date: new Date(payloadObj.nbf * 1000).toLocaleString("ko-KR", {
+          hour12: false,
+        }),
+        relative: getJwtRelativeTime(payloadObj.nbf, now),
+      };
+    }
+
+    return {
+      header: headerObj,
+      payload: payloadObj,
+      signature: parts[2],
+      headerRaw: header,
+      payloadRaw: payload,
+      headerJson: JSON.stringify(headerObj, null, 2),
+      payloadJson: JSON.stringify(payloadObj, null, 2),
+      timeFields,
+      isExpired: timeFields.exp?.isExpired ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function safeBase64Decode(str) {
+  try {
+    // Base64URL → Base64
+    let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = base64.length % 4;
+    if (pad) base64 += "=".repeat(4 - pad);
+    return decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
+        .join(""),
+    );
+  } catch {
+    return null;
+  }
+}
+
+function getJwtRelativeTime(ts, now) {
+  const diff = ts - now;
+  const absDiff = Math.abs(diff);
+  const isFuture = diff > 0;
+
+  const units = [
+    { label: "일", value: 86400 },
+    { label: "시간", value: 3600 },
+    { label: "분", value: 60 },
+    { label: "초", value: 1 },
+  ];
+
+  for (const unit of units) {
+    const count = Math.floor(absDiff / unit.value);
+    if (count >= 1) {
+      return isFuture ? `${count}${unit.label} 후` : `${count}${unit.label} 전`;
+    }
+  }
+  return "지금";
+}
