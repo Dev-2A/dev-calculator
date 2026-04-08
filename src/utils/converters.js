@@ -52,3 +52,79 @@ function formatBinary(bin) {
     .reverse()
     .join("");
 }
+
+//SECTION - Unix 타임스탬프 변환
+export function timestampToDate(timestamp) {
+  const cleaned = String(timestamp).trim();
+  if (!cleaned || !/^-?\d+$/.test(cleaned)) return null;
+
+  let ts = parseInt(cleaned, 10);
+
+  // 13자리면 밀리초, 10자리면 초 단위로 판단
+  const unit = cleaned.replace(/^-/, "").length >= 13 ? "ms" : "s";
+  const ms = unit === "ms" ? ts : ts * 1000;
+
+  const date = new Date(ms);
+  if (isNaN(date.getTime())) return null;
+
+  return {
+    unit,
+    timestampSec: Math.floor(ms / 1000),
+    timestampMs: ms,
+    iso: date.toISOString(),
+    utc: date.toUTCString(),
+    local: date.toLocaleString("ko-KR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }),
+    relative: getRelativeTime(ms),
+    breakdown: {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      hour: date.getHours(),
+      minute: date.getMinutes(),
+      second: date.getSeconds(),
+      dayOfWeek: ["일", "월", "화", "수", "목", "금", "토"][date.getDay()],
+    },
+  };
+}
+
+export function dateToTimestamp(dateString) {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return null;
+
+  return {
+    timestampSec: Math.floor(date.getTime() / 1000),
+    timestampMs: date.getTime(),
+  };
+}
+
+function getRelativeTime(ms) {
+  const now = Date.now();
+  const diff = ms - now;
+  const absDiff = Math.abs(diff);
+  const isFuture = diff > 0;
+
+  const units = [
+    { label: "년", value: 365.25 * 24 * 60 * 60 * 1000 },
+    { label: "개월", value: 30.44 * 24 * 60 * 60 * 1000 },
+    { label: "일", value: 24 * 60 * 60 * 1000 },
+    { label: "시간", value: 60 * 60 * 1000 },
+    { label: "분", value: 60 * 1000 },
+    { label: "초", value: 1000 },
+  ];
+
+  for (const unit of units) {
+    const count = Math.floor(absDiff / unit.value);
+    if (count >= 1) {
+      return isFuture ? `${count}${unit.label} 후` : `${count}${unit.label} 전`;
+    }
+  }
+  return "방금 지금";
+}
