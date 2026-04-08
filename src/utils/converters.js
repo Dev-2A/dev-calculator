@@ -618,3 +618,124 @@ function generateHexDump(bytes, maxBytes) {
     totalBytes: bytes.length,
   };
 }
+
+//SECTION - Hash 생성기
+export async function generateHashes(input) {
+  if (!input) return null;
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+
+  const [sha1, sha256, sha384, sha512] = await Promise.all([
+    cryptoHash("SHA-1", data),
+    cryptoHash("SHA-256", data),
+    cryptoHash("SHA-384", data),
+    cryptoHash("SHA-512", data),
+  ]);
+
+  const md5 = calcMD5(input);
+
+  return {
+    md5,
+    sha1,
+    sha256,
+    sha384,
+    sha512,
+    inputSize: data.length,
+  };
+}
+
+async function cryptoHash(algo, data) {
+  const buffer = await crypto.subtle.digest(algo, data);
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function calcMD5(string) {
+  const k = [];
+  for (let i = 0; i < 64; i++) {
+    k[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000);
+  }
+
+  const s = [
+    7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5,
+    9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11,
+    16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10,
+    15, 21,
+  ];
+
+  // UTF-8 인코딩
+  const bytes = new TextEncoder().encode(string);
+  const bitLen = bytes.length * 8;
+
+  // 패딩
+  const padded = [];
+  for (let i = 0; i < bytes.length; i++) padded.push(bytes[i]);
+  padded.push(0x80);
+  while (padded.length % 64 !== 56) padded.push(0);
+
+  // 길이 추가 (리틀 엔디안, 64비트)
+  for (let i = 0; i < 8; i++) {
+    padded.push((bitLen >>> (i * 8)) & 0xff);
+  }
+
+  let a0 = 0x67452301 >>> 0;
+  let b0 = 0xefcdab89 >>> 0;
+  let c0 = 0x98badcfe >>> 0;
+  let d0 = 0x10325476 >>> 0;
+
+  for (let offset = 0; offset < padded.length; offset += 64) {
+    const M = [];
+    for (let j = 0; j < 16; j++) {
+      M[j] =
+        padded[offset + j * 4] |
+        (padded[offset + j * 4 + 1] << 8) |
+        (padded[offset + j * 4 + 2] << 16) |
+        (padded[offset + j * 4 + 3] << 24);
+      M[j] = M[j] >>> 0;
+    }
+
+    let A = a0,
+      B = b0,
+      C = c0,
+      D = d0;
+
+    for (let i = 0; i < 64; i++) {
+      let F, g;
+      if (i < 16) {
+        F = (B & C) | (~B & D);
+        g = i;
+      } else if (i < 32) {
+        F = (D & B) | (~D & C);
+        g = (5 * i + 1) % 16;
+      } else if (i < 48) {
+        F = B ^ C ^ D;
+        g = (3 * i + 5) % 16;
+      } else {
+        F = C ^ (B | ~D);
+        g = (7 * i) % 16;
+      }
+
+      F = F >>> 0;
+      const temp = D;
+      D = C;
+      C = B;
+      const sum = (A + F + k[i] + M[g]) >>> 0;
+      B = (B + ((sum << s[i]) | (sum >>> (32 - s[i])))) >>> 0;
+      A = temp;
+    }
+
+    a0 = (a0 + A) >>> 0;
+    b0 = (b0 + B) >>> 0;
+    c0 = (c0 + C) >>> 0;
+    d0 = (d0 + D) >>> 0;
+  }
+
+  const toHex = (val) =>
+    [0, 8, 16, 24]
+      .map((shift) => ((val >>> shift) & 0xff).toString(16).padStart(2, "0"))
+      .join("");
+
+  return toHex(a0) + toHex(b0) + toHex(c0) + toHex(d0);
+}
