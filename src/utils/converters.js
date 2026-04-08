@@ -128,3 +128,57 @@ function getRelativeTime(ms) {
   }
   return "방금 지금";
 }
+
+//SECTION - 바이트 단위 변환
+const byteUnits = [
+  { key: "b", label: "Bytes (B)", factor: 1 },
+  { key: "kb", label: "Kilobytes (KB)", factor: 1024 },
+  { key: "mb", label: "Megabytes (MB)", factor: 1024 ** 2 },
+  { key: "gb", label: "Gigabytes (GB)", factor: 1024 ** 3 },
+  { key: "tb", label: "Terabytes (TB)", factor: 1024 ** 4 },
+  { key: "pb", label: "Petabytes (PB)", factor: 1024 ** 5 },
+];
+
+const siUnits = [
+  { key: "b", label: "Bytes (B)", factor: 1 },
+  { key: "kb", label: "Kilobytes (KB)", factor: 1000 },
+  { key: "mb", label: "Megabytes (MB)", factor: 1000 ** 2 },
+  { key: "gb", label: "Gigabytes (GB)", factor: 1000 ** 3 },
+  { key: "tb", label: "Terabytes (TB)", factor: 1000 ** 4 },
+  { key: "pb", label: "Petabytes (PB)", factor: 1000 ** 5 },
+];
+
+export function convertBytes(value, fromUnit, useSI = false) {
+  const num = parseFloat(value);
+  if (isNaN(num) || num < 0) return null;
+
+  const units = useSI ? siUnits : byteUnits;
+  const from = units.find((u) => u.key === fromUnit);
+  if (!from) return null;
+
+  const bytes = num * from.factor;
+
+  return units.map((unit) => ({
+    key: unit.key,
+    label: unit.label,
+    value: bytes / unit.factor,
+    formatted: formatByteValue(bytes / unit.factor),
+    bytes,
+  }));
+}
+
+function formatByteValue(val) {
+  if (val === 0) return "0";
+  if (Number.isInteger(val)) return val.toLocaleString();
+  // 소수점 이하는 유효숫자 기준으로 보기 좋게 표시
+  if (val >= 1)
+    return val.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  // 1 미만의 작은 수 → 소수점으로 표시 (지수 표기 X)
+  const str = val.toFixed(20);
+  // 유효숫자 4자리까지만 보존
+  const match = str.match(/^0\.(0*?)(\d{1,4})/);
+  if (match) return `0.${match[1]}${match[2]}`;
+  return str;
+}
+
+export { byteUnits, siUnits };
