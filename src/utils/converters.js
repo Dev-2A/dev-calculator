@@ -495,3 +495,126 @@ export function parseUrlParts(input) {
     return null;
   }
 }
+
+//SECTION - Base64 인코더/디코더
+export function encodeBase64(input, urlSafe = false) {
+  if (!input) return null;
+  try {
+    // UTF-8 지원을 위해 TextEncoder 사용
+    const bytes = new TextEncoder().encode(input);
+    const binary = Array.from(bytes)
+      .map((b) => String.fromCharCode(b))
+      .join("");
+    let encoded = btoa(binary);
+
+    if (urlSafe) {
+      encoded = encoded
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    }
+
+    return {
+      encoded,
+      originalSize: new Blob([input]).size,
+      encodedSize: encoded.length,
+      ratio: ((encoded.length / new Blob([input]).size) * 100).toFixed(1),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function decodeBase64(input) {
+  if (!input) return null;
+  try {
+    // Base64URL → Base64 변환
+    let base64 = input.trim().replace(/-/g, "+").replace(/_/g, "/");
+    const pad = base64.length % 4;
+    if (pad) base64 += "=".repeat(4 - pad);
+
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+
+    // 텍스트 디코딩 시도
+    let text = null;
+    let isText = true;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {
+      isText = false;
+    }
+
+    // 이미지 감지 (PNG, JPEG, GIF< WebP)
+    const imageType = detectImageType(bytes);
+
+    return {
+      text,
+      isText,
+      imageType,
+      byteLength: bytes.length,
+      decodedSize: text ? new Blob([text]).size : bytes.length,
+      hexDump: generateHexDump(bytes, 64), // 처음 64바이트만
+      dataUri: imageType
+        ? `data:image/${imageType};base64,${input.trim()}`
+        : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function detectImageType(bytes) {
+  if (bytes.length < 4) return null;
+  // PNG
+  if (
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  )
+    return "png";
+  // JPEG
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
+    return "jpeg";
+  // GIF
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return "gif";
+  // WebP
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  )
+    return "webp";
+  return null;
+}
+
+function generateHexDump(bytes, maxBytes) {
+  const lines = [];
+  const limit = Math.min(bytes.length, maxBytes);
+  for (let i = 0; i < limit; i += 16) {
+    const slice = bytes.slice(i, Math.min(i + 16, limit));
+    const hex = Array.from(slice)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join(" ");
+    const ascii = Array.from(slice)
+      .map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : "."))
+      .join("");
+    lines.push({
+      offset: i.toString(16).padStart(8, "0"),
+      hex: hex.padEnd(47, " "),
+      ascii,
+    });
+  }
+  return {
+    lines,
+    truncated: bytes.length > maxBytes,
+    totalBytes: bytes.length,
+  };
+}
