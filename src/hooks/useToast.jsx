@@ -24,21 +24,16 @@ export function ToastProvider({ children }) {
             className={`
               pointer-events-auto px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium
               animate-toast-in backdrop-blur-sm border
-              ${
-                toast.type === "success"
-                  ? "bg-green-500/15 border-green-500/30 text-green-400"
-                  : toast.type === "error"
-                    ? "bg-red-500/15 border-red-500/30 text-red-400"
-                    : "bg-gray-800 border-gray-700 text-gray-300"
+              ${toast.type === 'success'
+                ? 'bg-green-500/15 border-green-500/30 text-green-500'
+                : toast.type === 'error'
+                  ? 'bg-red-500/15 border-red-500/30 text-red-500'
+                  : 'theme-bg-card theme-border theme-text-sec'
               }
             `}
           >
             <span className="mr-1.5">
-              {toast.type === "success"
-                ? "✓"
-                : toast.type === "error"
-                  ? "✕"
-                  : "ℹ"}
+              {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}
             </span>
             {toast.message}
           </div>

@@ -17,11 +17,11 @@ export default function CopyButton({ value, label, size = "sm" }) {
     <button
       onClick={handleClick}
       className={`
-        rounded-md bg-gray-800 transition-all cursor-pointer shrink-0
+        rounded-md theme-bg-card theme-border border transition-all cursor-pointer flex-shrink-0
         ${
           justCopied
-            ? "text-green-400 bg-green-500/10"
-            : "text-gray-400 hover:bg-gray-700 hover:text-gray-200"
+            ? "text-green-500 bg-green-500/10"
+            : "theme-text-muted hover:opacity-80"
         }
         ${size === "sm" ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"}
       `}
