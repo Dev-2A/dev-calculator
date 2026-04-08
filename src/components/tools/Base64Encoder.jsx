@@ -1,34 +1,14 @@
 import { useState } from "react";
 import { encodeBase64, decodeBase64 } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 export default function Base64Encoder() {
   const [mode, setMode] = useState("encode");
   const [input, setInput] = useState("");
   const [urlSafe, setUrlSafe] = useState(false);
-  const [copied, setCopied] = useState(null);
 
   const encodeResult = mode === "encode" ? encodeBase64(input, urlSafe) : null;
   const decodeResult = mode === "decode" ? decodeBase64(input) : null;
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const CopyBtn = ({ value, label }) => (
-    <button
-      onClick={() => handleCopy(value, label)}
-      className="ml-3 px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                 hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer flex-shrink-0"
-    >
-      {copied === label ? "✓ 복사됨" : "복사"}
-    </button>
-  );
 
   return (
     <div className="space-y-6">
@@ -131,7 +111,7 @@ export default function Base64Encoder() {
               <h3 className="text-sm font-semibold text-gray-400">
                 인코딩 결과
               </h3>
-              <CopyBtn value={encodeResult.encoded} label="encoded" />
+              <CopyButton value={encodeResult.encoded} label="encoded" />
             </div>
             <div className="px-5 py-4">
               <p className="font-mono text-sm text-green-400 break-all select-all">
@@ -146,7 +126,7 @@ export default function Base64Encoder() {
               <h3 className="text-sm font-semibold text-gray-400">
                 Data URI (text/plain)
               </h3>
-              <CopyBtn
+              <CopyButton
                 value={`data:text/plain;base64,${encodeResult.encoded}`}
                 label="datauri"
               />
@@ -207,7 +187,7 @@ export default function Base64Encoder() {
                     텍스트
                   </span>
                 </div>
-                <CopyBtn value={decodeResult.text} label="decoded" />
+                <CopyButton value={decodeResult.text} label="decoded" />
               </div>
               <div className="px-5 py-4">
                 <p className="font-mono text-sm text-green-400 break-all whitespace-pre-wrap">

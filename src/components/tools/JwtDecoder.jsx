@@ -1,31 +1,10 @@
 import { useState } from "react";
 import { decodeJwt } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 export default function JwtDecoder() {
   const [input, setInput] = useState("");
-  const [copied, setCopied] = useState(null);
-
   const result = decodeJwt(input);
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const CopyBtn = ({ value, label }) => (
-    <button
-      onClick={() => handleCopy(value, label)}
-      className="px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                 hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer flex-shrink-0"
-    >
-      {copied === label ? "✓ 복사됨" : "복사"}
-    </button>
-  );
 
   // 토큰 색상 분리 미리보기
   const tokenParts = input.trim().split(".");
@@ -118,7 +97,7 @@ export default function JwtDecoder() {
               <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
               <h3 className="text-sm font-semibold text-gray-400">Header</h3>
             </div>
-            <CopyBtn value={result.headerJson} label="header" />
+            <CopyButton value={result.headerJson} label="header" />
           </div>
           <pre className="px-5 py-4 font-mono text-sm text-red-300 overflow-x-auto">
             {result.headerJson}
@@ -134,7 +113,7 @@ export default function JwtDecoder() {
               <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
               <h3 className="text-sm font-semibold text-gray-400">Payload</h3>
             </div>
-            <CopyBtn value={result.payloadJson} label="payload" />
+            <CopyButton value={result.payloadJson} label="payload" />
           </div>
           <pre className="px-5 py-4 font-mono text-sm text-violet-300 overflow-x-auto">
             {result.payloadJson}
@@ -172,7 +151,7 @@ export default function JwtDecoder() {
                     ({tf.relative})
                   </span>
                 </div>
-                <CopyBtn value={String(tf.timestamp)} label={tf.label} />
+                <CopyButton value={String(tf.timestamp)} label={tf.label} />
               </div>
             ))}
           </div>

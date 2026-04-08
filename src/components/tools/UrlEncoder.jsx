@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { encodeUrl, decodeUrl, parseUrlParts } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 const modes = [
   { id: "encode", label: "인코딩" },
@@ -11,31 +12,10 @@ export default function UrlEncoder() {
   const [mode, setMode] = useState("encode");
   const [input, setInput] = useState("");
   const [encodeMode, setEncodeMode] = useState("component");
-  const [copied, setCopied] = useState(null);
 
   const encodeResult = mode === "encode" ? encodeUrl(input, encodeMode) : null;
   const decodeResult = mode === "decode" ? decodeUrl(input) : null;
   const parseResult = mode === "parse" ? parseUrlParts(input) : null;
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const CopyBtn = ({ value, label }) => (
-    <button
-      onClick={() => handleCopy(value, label)}
-      className="ml-3 px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                 hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer flex-shrink-0"
-    >
-      {copied === label ? "✓ 복사됨" : "복사"}
-    </button>
-  );
 
   return (
     <div className="space-y-6">
@@ -139,7 +119,7 @@ export default function UrlEncoder() {
               <h3 className="text-sm font-semibold text-gray-400">
                 인코딩 결과
               </h3>
-              <CopyBtn value={encodeResult.encoded} label="encoded" />
+              <CopyButton value={encodeResult.encoded} label="encoded" />
             </div>
             <div className="px-5 py-4">
               <p className="font-mono text-sm text-green-400 break-all">
@@ -191,7 +171,7 @@ export default function UrlEncoder() {
               <h3 className="text-sm font-semibold text-gray-400">
                 디코딩 결과
               </h3>
-              <CopyBtn value={decodeResult.decoded} label="decoded" />
+              <CopyButton value={decodeResult.decoded} label="decoded" />
             </div>
             <div className="px-5 py-4">
               <p className="font-mono text-sm text-green-400 break-all">
@@ -209,7 +189,7 @@ export default function UrlEncoder() {
                     이중 인코딩 감지
                   </h3>
                 </div>
-                <CopyBtn value={decodeResult.doubleDecoded} label="double" />
+                <CopyButton value={decodeResult.doubleDecoded} label="double" />
               </div>
               <div className="px-5 py-4">
                 <p className="font-mono text-sm text-yellow-300 break-all">
@@ -284,7 +264,7 @@ export default function UrlEncoder() {
                         {row.value}
                       </span>
                     </div>
-                    <CopyBtn value={row.value} label={row.label} />
+                    <CopyButton value={row.value} label={row.label} />
                   </div>
                 ))}
             </div>

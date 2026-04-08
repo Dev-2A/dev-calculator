@@ -1,31 +1,11 @@
 import { useState } from "react";
 import { parseColor } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 export default function ColorConverter() {
   const [input, setInput] = useState("");
-  const [copied, setCopied] = useState(null);
 
   const result = parseColor(input);
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const CopyBtn = ({ value, label }) => (
-    <button
-      onClick={() => handleCopy(value, label)}
-      className="ml-3 px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                 hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer shrink-0"
-    >
-      {copied === label ? "✓ 복사됨" : "복사"}
-    </button>
-  );
 
   const resultRows = result
     ? [
@@ -134,7 +114,7 @@ export default function ColorConverter() {
                     {row.value}
                   </span>
                 </div>
-                <CopyBtn value={row.copyValue} label={row.label} />
+                <CopyButton value={row.copyValue} label={row.label} />
               </div>
             ))}
           </div>

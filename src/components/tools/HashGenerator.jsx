@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { generateHashes } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 const hashInfo = [
   {
@@ -44,7 +45,6 @@ export default function HashGenerator() {
   const [result, setResult] = useState(null);
   const [compareHash, setCompareHash] = useState("");
   const [showCompare, setShowCompare] = useState(false);
-  const [copied, setCopied] = useState(null);
   const [uppercase, setUppercase] = useState(false);
   const debounceRef = useRef(null);
 
@@ -66,16 +66,6 @@ export default function HashGenerator() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [input]);
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
 
   const formatHash = (hash) => (uppercase ? hash.toUpperCase() : hash);
 
@@ -163,13 +153,7 @@ export default function HashGenerator() {
                         {info.status}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleCopy(display, info.key)}
-                      className="px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                                 hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer"
-                    >
-                      {copied === info.key ? "✓ 복사됨" : "복사"}
-                    </button>
+                    <CopyButton value={display} label={info.label} />
                   </div>
                   <p className="font-mono text-xs text-gray-100 break-all select-all leading-relaxed">
                     {display}

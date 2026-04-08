@@ -1,23 +1,13 @@
 import { useState, useMemo } from "react";
 import { formatJson } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 export default function JsonFormatter() {
   const [input, setInput] = useState("");
   const [indent, setIndent] = useState(2);
   const [viewMode, setViewMode] = useState("formatted"); // 'formatted' | 'minified' | 'tree'
-  const [copied, setCopied] = useState(null);
 
   const result = useMemo(() => formatJson(input, indent), [input, indent]);
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
 
   const handlePrettify = () => {
     if (result?.valid) {
@@ -176,20 +166,10 @@ export default function JsonFormatter() {
                 <h3 className="text-sm font-semibold text-gray-400">
                   {viewMode === "formatted" ? "Formatted" : "Minified"}
                 </h3>
-                <button
-                  onClick={() =>
-                    handleCopy(
-                      viewMode === "formatted"
-                        ? result.formatted
-                        : result.minified,
-                      viewMode,
-                    )
-                  }
-                  className="px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                             hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer"
-                >
-                  {copied === viewMode ? "✓ 복사됨" : "복사"}
-                </button>
+                <CopyButton
+                  value={viewMode === 'formatted' ? result.formatted : result.minified}
+                  label={viewMode === 'formatted' ? 'Formatted JSON' : 'Minified JSON'}
+                />
               </div>
               <pre className="px-5 py-4 font-mono text-sm text-gray-100 overflow-x-auto max-h-96 overflow-y-auto">
                 {viewMode === "formatted" ? (

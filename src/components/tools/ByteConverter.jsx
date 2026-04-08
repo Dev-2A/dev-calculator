@@ -1,24 +1,14 @@
 import { useState } from "react";
 import { convertBytes, byteUnits, siUnits } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 export default function ByteConverter() {
   const [input, setInput] = useState("");
   const [fromUnit, setFromUnit] = useState("mb");
   const [useSI, setUseSI] = useState(false);
-  const [copied, setCopied] = useState(null);
 
   const units = useSI ? siUnits : byteUnits;
   const results = convertBytes(input, fromUnit, useSI);
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -148,14 +138,7 @@ export default function ByteConverter() {
                       {row.formatted}
                     </span>
                   </div>
-                  <button
-                    onClick={() => handleCopy(String(row.value), row.key)}
-                    className="ml-3 px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                               hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer
-                               shrink-0"
-                  >
-                    {copied === row.key ? "✓ 복사됨" : "복사"}
-                  </button>
+                  <CopyButton value={String(row.value)} label={row.key} />
                 </div>
               );
             })}
@@ -173,13 +156,7 @@ export default function ByteConverter() {
             <span className="font-mono text-lg text-gray-200">
               {results[0].bytes.toLocaleString()} bytes
             </span>
-            <button
-              onClick={() => handleCopy(String(results[0].bytes), "raw")}
-              className="px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                         hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer"
-            >
-              {copied === "raw" ? "✓ 복사됨" : "복사"}
-            </button>
+            <CopyButton value={String(results[0].bytes)} label="원시 바이트" />
           </div>
         </div>
       )}

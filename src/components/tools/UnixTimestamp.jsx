@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { timestampToDate, dateToTimestamp } from "../../utils/converters";
+import CopyButton from "../common/CopyButton";
 
 export default function UnixTimestamp() {
   const [mode, setMode] = useState("toDate"); // 'toDate' | 'toTimestamp'
   const [tsInput, setTsInput] = useState("");
   const [dateInput, setDateInput] = useState("");
   const [now, setNow] = useState(Date.now());
-  const [copied, setCopied] = useState(null);
 
   // 실시간 현재 시각
   useEffect(() => {
@@ -16,26 +16,6 @@ export default function UnixTimestamp() {
 
   const tsResult = timestampToDate(tsInput);
   const dtResult = dateToTimestamp(dateInput);
-
-  const handleCopy = async (text, key) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const CopyBtn = ({ value, label }) => (
-    <button
-      onClick={() => handleCopy(value, label)}
-      className="ml-3 px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-400
-                 hover:bg-gray-700 hover:text-gray-200 transition-all cursor-pointer flex-shrink-0"
-    >
-      {copied === label ? "✓ 복사됨" : "복사"}
-    </button>
-  );
 
   return (
     <div className="space-y-6">
@@ -178,7 +158,7 @@ export default function UnixTimestamp() {
                         {row.value}
                       </span>
                     </div>
-                    <CopyBtn value={row.value} label={row.label} />
+                    <CopyButton value={row.copyValue} label={row.label} />
                   </div>
                 ))}
               </div>
@@ -299,7 +279,7 @@ export default function UnixTimestamp() {
                         {row.value}
                       </span>
                     </div>
-                    <CopyBtn value={row.value} label={row.label} />
+                    <CopyButton value={row.copyValue} label={row.label} />
                   </div>
                 ))}
               </div>
