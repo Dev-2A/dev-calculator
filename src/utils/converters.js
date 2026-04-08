@@ -417,3 +417,81 @@ function getJwtRelativeTime(ts, now) {
   }
   return "지금";
 }
+
+//SECTION - URL 인코더/디코더
+export function encodeUrl(input, mode = "component") {
+  if (!input) return null;
+  try {
+    const encoded =
+      mode === "component" ? encodeURIComponent(input) : encodeURI(input);
+    return {
+      encoded,
+      charCount: input.length,
+      encodedCharCount: encoded.length,
+      sizeDiff: encoded.length - input.length,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function decodeUrl(input) {
+  if (!input) return null;
+  try {
+    // 이중 인코딩 감지
+    const decoded = decodeURIComponent(input);
+    let doubleDecoded = null;
+    try {
+      const second = decodeURIComponent(decoded);
+      if (second !== decoded) doubleDecoded = second;
+    } catch {
+      /* 이중 인코딩 아님 */
+    }
+
+    return {
+      decoded,
+      doubleDecoded,
+      charCount: input.length,
+      decodedCharCount: decoded.length,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function parseUrlParts(input) {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  try {
+    // 프로토콜이 없으면 임시로 붙여서 파싱
+    const hasProtocol = /^[a-zA-Z]+:\/\//.test(trimmed);
+    const urlStr = hasProtocol ? trimmed : `https://${trimmed}`;
+    const url = new URL(urlStr);
+
+    const params = [];
+    url.searchParams.forEach((value, key) => {
+      params.push({
+        key,
+        value,
+        keyDecoded: decodeURIComponent(key),
+        valueDecoded: decodeURIComponent(value),
+      });
+    });
+
+    return {
+      protocol: url.protocol.replace(":", ""),
+      host: url.host,
+      hostname: url.hostname,
+      port: url.port || null,
+      pathname: url.pathname,
+      search: url.search,
+      hash: url.hash,
+      params,
+      origin: url.origin,
+      hasProtocol,
+    };
+  } catch {
+    return null;
+  }
+}
